@@ -3,7 +3,7 @@ suppressPackageStartupMessages({
   library(purrr)
   library(tidyverse)
   source("http://peterhaschke.com/Code/multiplot.R")
-  source("~/Git/exAtlas/src/R/Differential_abundance/extra_func.R")
+  source("~/Git/exAtlas/src/R/Differential_abundance/DAM_functions.R")
 })
 
 # Load data 
@@ -76,18 +76,10 @@ all_tissues <- met@colData$Tissue_exp %>% unique()
 DEM_ttest <- lapply(all_tissues, function(i){
   my_res <- lapply(all_tissues, function(x) {
     if(i != x){
-      diff_test2(met, "Tissue_exp", c(x, i))
+      diff_ttest(met, "Tissue_exp", c(x, i))
     }
   })
   my_res %>% unlist(., recursive = FALSE)
 }) %>% unlist(., recursive = FALSE)
 
 save(met, DEM_ttest, file = file.path(out_dir, "exAtlas_DEM_tissue_exp.RData"))
-
-#volcano_plot2(DEM_ttest, 
-#              comp = "ttest_Tissue_exp_Leaf_D3_GH_vs_Leaf_D2_GH",
-#              label_colors = c("dodgerblue","firebrick4"),
-#              dm_cutoff = 0.5,
-#              p_adjust = TRUE)
-
-
