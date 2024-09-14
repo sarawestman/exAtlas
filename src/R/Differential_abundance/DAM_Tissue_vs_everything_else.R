@@ -85,7 +85,7 @@ DEM_test <- lapply(test_col, function(x){
 names(DEM_test) <- test_col
 
 # Filtering 
-padj = 0.01
+padj = 0.001
 lfc = 0.5
 
 DEM_lists <- lapply(DEM_test, function(x){

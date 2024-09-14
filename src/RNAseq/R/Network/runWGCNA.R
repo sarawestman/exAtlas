@@ -20,7 +20,7 @@ sel_tissues <- c("Leaf_D3_GH")
 out_dir <- file.path("~/Sara/exAtlas/res/RNAseq/analysis/WGCNA", paste(sel_tissues, collapse = "_"))
 dir.create(out_dir, showWarnings = FALSE)
 
-SPG_known_DAM <- read.delim("~/Sara/exAtlas/res/Preprocessing_res/MS/RC_quantification/SPG_DAM_singletons_rm.csv", sep = ";")
+SPG_known_DAM <- read.csv("~/Sara/exAtlas/res/Preprocessing_res/MS/RC_quantification/SPG_DAM_fragment_info.csv", sep = ";")
 exAtlas_LCMS_RNA_meta_info <- read.delim("~/Sara/exAtlas/res/RNAseq/analysis/DE/exAtlas_LCMS_RNA_meta_info.tsv") %>% 
   filter(Tissue_exp %in% sel_tissues)
 LCMS_dat <- read.delim("~/Sara/exAtlas/res/Preprocessing_res/MS/DEM/Tissue_exp/exAtlas_LCMS_vsn_normalized_intensity.tsv")
@@ -204,9 +204,9 @@ allTraits <- LCMS_untarg_sel %>%
   t() %>% 
   as.data.frame() %>% 
   rownames_to_column("RC") %>% 
-  left_join(., SPG_known_DAM %>% dplyr::select(-c(SA:Note)) %>% mutate(RC = paste0("RC", RC)), by = "RC") %>% 
-  mutate(lab = paste0(Trait, " (", RC, ")")) %>% 
-  dplyr::select(-c(RC, Trait)) %>%
+  left_join(., SPG_known_DAM %>% dplyr::select(c(RC, Compound)) %>% distinct(RC, .keep_all = TRUE) %>% mutate(RC = paste0("RC", RC)), by = "RC") %>% 
+  mutate(lab = paste0(Compound, " (", RC, ")")) %>% 
+  dplyr::select(-c(RC, Compound)) %>%
   column_to_rownames("lab") %>% 
   t() %>% 
   as.data.frame() %>% 
@@ -216,14 +216,20 @@ my_cor <- cor(allTraits %>% dplyr::select(-c(Sample)))
 
 # Add annotation 
 annoRow <- SPG_known_DAM %>% 
-  mutate(lab = ifelse(!is.na(Trait), paste0(Trait," (RC", RC, ")"), RC)) %>% 
+  distinct(RC, .keep_all = TRUE) %>% 
+  mutate(lab = ifelse(!is.na(Compound), paste0(Compound," (RC", RC, ")"), RC),
+         SA = ifelse(is.na(SA), "No", SA),
+         HCH = ifelse(is.na(HCH), "No", HCH),
+         CN = ifelse(is.na(CN), "No", CN),
+         BA = ifelse(is.na(BA), "No", BA),
+         AC = ifelse(is.na(AC), "No", AC)) %>% 
   arrange(match(lab, colnames(allTraits))) %>% 
   column_to_rownames("lab") %>% 
-  dplyr::select(-c(RC, Trait, Anno, Note, MZ, RT))
+  dplyr::select(-c(RC:Annotation, mz:Note))
 stopifnot(rownames(annoRow) == colnames(allTraits[,-1]))
 
 ann_colors = list(
-  CN_DAM = c(Up = "red", Dn = "blue", NS = "gray"),
+  CN_mode = c("Up CN" = "red", "Down CN" = "blue", "NS" = "gray"),
   SA = c(Yes = "coral3", No = "gray"), 
   HCH = c(Yes = "coral3", No = "gray"),
   CN = c(Yes = "coral3", No = "gray"),
@@ -258,13 +264,15 @@ nSamples = nrow(expression.data)
 mergedMEs = merge$newMEs
 module.trait.correlation = cor(mergedMEs, datTraits, use = "p") #p for pearson correlation coefficient 
 module.trait.Pvalue = corPvalueStudent(module.trait.correlation, nSamples) #calculate the p-value associated with the correlation
+write_tsv(module.trait.Pvalue %>% as.data.frame() %>% rownames_to_column("modules"), 
+          file.path(out_dir, "Module_SPGtrait_pval.tsv"))
 write_tsv(module.trait.correlation %>% as.data.frame() %>% rownames_to_column("modules"), 
           file.path(out_dir, "Module_SPGtrait_correlation.tsv"))
 
 # Once you have the gene signficance and the corresponding p-value for all the modules and traits, you can create a graphical representation (module-trait heatmap) that will be helpful to neatly visualize the module-trait relationships.
 # Will display correlations and their p-values
 #module.trait.correlation <- module.trait.correlation[-53,] # remove MEgrey from Leaf_D1
-#module.trait.Pvalue <- module.trait.Pvalue[-53,] # remove MEgrey from Leaf_D1
+#module.trait.Pvalue <- mergedMEs[-53,] # remove MEgrey from Leaf_D1
 #mergedMEs <- mergedMEs[,-53] # remove MEgrey from Leaf_D1
 textMatrix = paste(signif(module.trait.correlation, 2), "\n(",
                    signif(module.trait.Pvalue, 1), ")", sep = "");
