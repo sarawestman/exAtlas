@@ -12,7 +12,7 @@ DE_files <- list.files("~/Sara/exAtlas/res/RNAseq/analysis/DE/Tissue_vs_everythi
 geneID2GO <- readMappings("/mnt/picea/projects/aspseq/nstreet/swasp/Sara/Genome_analyses/Annotations/potra2go.tsv")
 geneNames <- names(geneID2GO)
 
-mode <- "dn"
+mode <- "up"
 DEG_res_sel <- lapply(DE_files, function(x){
   load(x)
   DE_res[[mode]]
@@ -21,6 +21,11 @@ names(DEG_res_sel)  <- gsub("(?<!^)([[:upper:]])", " \\1", str_remove_all(basena
 
 # Select data 
 DEG_sel <- DEG_res_sel[c(6,2:4,7,1,5)]
+
+# Save venn
+pdf(file.path(out_dir, paste0("Venn_DEG_",mode,"_Tissue_vs_everything_else.pdf")))
+ggVennDiagram::ggVennDiagram(DEG_sel, label = "count")
+graphics.off()
 
 # Run enrichment 
 enr_res <- lapply(names(DEG_sel), function(x){

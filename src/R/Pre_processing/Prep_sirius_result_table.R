@@ -20,11 +20,11 @@ MSMS_info <- read.delim("~/Sara/exAtlas/res/MSMS_info/MSMS_summary_info_uniqueID
 formula_identification_MSMS <- left_join(formula_identifications, MSMS_info, by = c(ionMass = "precursorMZ", retentionTimeInSeconds = "retentionTime")) 
 stopifnot(length(unique(formula_identification_MSMS$id)) == length(unique(formula_identifications$id)))
 
-# Add compounf identification info to formula MSMS
+# Add compound identification info to formula MSMS
 form_compound_identifications_MSMS <- left_join(formula_identification_MSMS, compound_identifications %>% 
                                                   dplyr::select(-c(rank, SiriusScore, molecularFormula,adduct, ionMass, retentionTimeInSeconds)), by = "id")
 
-# Add compounf identification info to formula MSMS
+# Add compound identification info to formula MSMS
 form_cano_compound_identifications_MSMS <- left_join(form_compound_identifications_MSMS, canopus_formula_summary %>% 
                                                   dplyr::select(-c(molecularFormula,adduct)), by = "id")
 

@@ -125,4 +125,4 @@ lapply(my_tissues, function(x){
     save(DE_res, file = file.path(sub_dir, paste0(contrasts_sel,".rda")))
   })
 })
-writeLines(capture.output(sessionInfo()), file.path(out_dir, "sessionInfo.txt"))
+writeLines(capture.output(sessionInfo()), file.path(out_dir, paste0("sessionInfo_", Sys.Date(),".txt")))
